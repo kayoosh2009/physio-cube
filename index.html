@@ -9,14 +9,14 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #0f172a; /* dark blue background */
-      color: #e0f2f1; /* greenish tint for text */
+      background-color: #0f172a;
+      color: #e0f2f1;
     }
 
     input, select, textarea {
       background-color: #1e293b;
       color: #e0f2f1;
-      border: 1px solid #4ade80; /* green accent */
+      border: 1px solid #4ade80;
     }
 
     .bg-white {
@@ -37,13 +37,15 @@
   </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-6">
-  <div class="shadow-2xl rounded-2xl w-full max-w-3xl p-6 bg-white">
-    <h1 class="text-2xl font-bold mb-6 text-center">Digital Physiotherapy Questionnaire</h1>
+<body class="min-h-screen flex flex-col p-4">
+  <div class="flex items-center space-x-2 mb-4">
+    <img src="icon.png" alt="Logo" class="w-10 h-10">
+    <h1 class="text-2xl font-bold">Digital Physiotherapy Questionnaire</h1>
+  </div>
 
+  <div class="shadow-2xl rounded-2xl w-full max-w-3xl mx-auto p-6 bg-white">
     <form id="questionnaireForm" class="space-y-6">
       <div id="questionContainer" class="space-y-4"></div>
-
       <div class="flex justify-between mt-6">
         <button type="button" id="prevBtn" class="bg-gray-300 px-4 py-2 rounded hidden">Back</button>
         <button type="button" id="nextBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Next</button>
@@ -63,15 +65,15 @@
       { label: "Name", name: "name", type: "text" },
       { label: "Email (optional)", name: "email", type: "email" },
       { label: "Age", name: "age", type: "number" },
-      { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Other"] },
-      { label: "Main sport or activity", name: "activity", type: "text" },
-      { label: "Fitness level", name: "fitness", type: "select", options: ["Amateur", "Semi-professional", "Professional"] },
+      { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Non-binary", "Prefer not to say"] },
+      { label: "Main sport or activity", name: "activity", type: "select", options: ["Running", "Cycling", "Swimming", "CrossFit", "Martial Arts", "Team Sports", "Yoga/Pilates", "Gym workouts", "Climbing", "Dance", "Rowing", "Walking", "Other"] },
+      { label: "Fitness level", name: "fitness", type: "select", options: ["Beginner", "Amateur", "Semi-professional", "Professional", "Elite", "Other"] },
       { label: "Training frequency and volume", name: "training", type: "text" },
       { label: "Pain location (describe or select from body map)", name: "pain_location", type: "text" },
-      { label: "Side (left/right)", name: "pain_side", type: "select", options: ["Left", "Right"] },
-      { label: "Pain type", name: "pain_type", type: "text" },
+      { label: "Side (left/right)", name: "pain_side", type: "select", options: ["Left", "Right", "Both", "Not sure"] },
+      { label: "Pain type", name: "pain_type", type: "select", options: ["Sharp", "Dull", "Tingling", "Burning", "Stabbing", "Aching", "Throbbing", "Numbness", "Other"] },
       { label: "Pain intensity (1-10)", name: "pain_intensity", type: "number" },
-      { label: "When does the pain appear?", name: "pain_when", type: "text" },
+      { label: "When does the pain appear?", name: "pain_when", type: "select", options: ["At rest", "During movement", "Under load", "Morning", "Evening", "Before exercise", "After exercise", "Varies"] },
       { label: "How long have you had this pain?", name: "pain_duration", type: "text" },
       { label: "What aggravates or relieves symptoms?", name: "pain_factors", type: "text" },
       { label: "What movements or actions cause pain?", name: "pain_movements", type: "text" },
@@ -120,9 +122,12 @@
         input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
       }
       input.name = q.name;
+      input.id = "currentInput";
 
       questionContainer.appendChild(label);
       questionContainer.appendChild(input);
+
+      input.focus();
 
       prevBtn.classList.toggle("hidden", index === 0);
       nextBtn.textContent = index === questions.length - 1 ? "Finish" : "Next";
@@ -154,6 +159,13 @@
         chatLink.href = `https://chat.openai.com/?model=gpt-4&prompt=${encodedPrompt}`;
         nextBtn.classList.add("hidden");
         prevBtn.classList.add("hidden");
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        nextBtn.click();
       }
     });
 
