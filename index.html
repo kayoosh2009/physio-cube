@@ -1,25 +1,178 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Моя реклама</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physio Questionnaire</title>
+  <link rel="icon" type="image/png" href="icon.png">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background-color: #121212;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      background-color: #0f172a; /* dark blue background */
+      color: #e0f2f1; /* greenish tint for text */
+    }
+
+    input, select, textarea {
+      background-color: #1e293b;
+      color: #e0f2f1;
+      border: 1px solid #4ade80; /* green accent */
+    }
+
+    .bg-white {
+      background-color: #1e293b !important;
+    }
+
+    .text-gray-700 {
+      color: #bbf7d0 !important;
+    }
+
+    .bg-blue-600 {
+      background-color: #2563eb !important;
+    }
+
+    .bg-green-600 {
+      background-color: #16a34a !important;
     }
   </style>
 </head>
-<body>
-  <iframe 
-    data-aa="2396750" 
-    src="https://ad.a-ads.com/2396750?size=200x200&background_color=000000&text_color=ffffff&title_color=fffafa&title_hover_color=ffffff"
-    style="width:200px; height:200px; border:0px; padding:0; overflow:hidden; background-color: transparent;">
-  </iframe>
+
+<body class="min-h-screen flex items-center justify-center p-6">
+  <div class="shadow-2xl rounded-2xl w-full max-w-3xl p-6 bg-white">
+    <h1 class="text-2xl font-bold mb-6 text-center">Digital Physiotherapy Questionnaire</h1>
+
+    <form id="questionnaireForm" class="space-y-6">
+      <div id="questionContainer" class="space-y-4"></div>
+
+      <div class="flex justify-between mt-6">
+        <button type="button" id="prevBtn" class="bg-gray-300 px-4 py-2 rounded hidden">Back</button>
+        <button type="button" id="nextBtn" class="bg-blue-600 text-white px-4 py-2 rounded">Next</button>
+      </div>
+    </form>
+
+    <div id="summarySection" class="hidden mt-6">
+      <h2 class="text-xl font-semibold mb-4">Summary</h2>
+      <pre id="summaryText" class="bg-gray-800 p-4 rounded-md text-sm overflow-auto text-green-100"></pre>
+      <button id="copyBtn" class="bg-green-600 text-white px-4 py-2 rounded mt-4">Copy to Clipboard</button>
+      <a id="chatLink" href="#" target="_blank" class="ml-4 text-green-400 underline hover:no-underline">Open in ChatGPT</a>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { label: "Name", name: "name", type: "text" },
+      { label: "Email (optional)", name: "email", type: "email" },
+      { label: "Age", name: "age", type: "number" },
+      { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Other"] },
+      { label: "Main sport or activity", name: "activity", type: "text" },
+      { label: "Fitness level", name: "fitness", type: "select", options: ["Amateur", "Semi-professional", "Professional"] },
+      { label: "Training frequency and volume", name: "training", type: "text" },
+      { label: "Pain location (describe or select from body map)", name: "pain_location", type: "text" },
+      { label: "Side (left/right)", name: "pain_side", type: "select", options: ["Left", "Right"] },
+      { label: "Pain type", name: "pain_type", type: "text" },
+      { label: "Pain intensity (1-10)", name: "pain_intensity", type: "number" },
+      { label: "When does the pain appear?", name: "pain_when", type: "text" },
+      { label: "How long have you had this pain?", name: "pain_duration", type: "text" },
+      { label: "What aggravates or relieves symptoms?", name: "pain_factors", type: "text" },
+      { label: "What movements or actions cause pain?", name: "pain_movements", type: "text" },
+      { label: "Limitations in daily life (walking, sleeping, stairs)?", name: "daily_limits", type: "text" },
+      { label: "Can you continue training? To what extent?", name: "training_ability", type: "text" },
+      { label: "Past injuries or surgeries?", name: "past_injuries", type: "text" },
+      { label: "Swelling, numbness, instability?", name: "neurological_signs", type: "text" },
+      { label: "Previous treatments (massage, tape, medication)?", name: "past_treatments", type: "text" }
+    ];
+
+    const questionContainer = document.getElementById("questionContainer");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const summarySection = document.getElementById("summarySection");
+    const summaryText = document.getElementById("summaryText");
+    const copyBtn = document.getElementById("copyBtn");
+    const chatLink = document.getElementById("chatLink");
+
+    let currentStep = 0;
+
+    function renderQuestion(index) {
+      questionContainer.innerHTML = "";
+      const q = questions[index];
+      const label = document.createElement("label");
+      label.classList = "block";
+      label.textContent = q.label;
+
+      let input;
+      if (q.type === "select") {
+        input = document.createElement("select");
+        input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "-- skip --";
+        input.appendChild(defaultOption);
+        q.options.forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt;
+          input.appendChild(option);
+        });
+      } else {
+        input = document.createElement("input");
+        input.type = q.type;
+        input.placeholder = "(Optional)";
+        input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
+      }
+      input.name = q.name;
+
+      questionContainer.appendChild(label);
+      questionContainer.appendChild(input);
+
+      prevBtn.classList.toggle("hidden", index === 0);
+      nextBtn.textContent = index === questions.length - 1 ? "Finish" : "Next";
+    }
+
+    function collectFormData() {
+      const inputs = document.querySelectorAll("#questionnaireForm input, #questionnaireForm select");
+      const data = {};
+      inputs.forEach(input => {
+        if (input.name) {
+          data[input.name] = input.value;
+        }
+      });
+      return data;
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (currentStep < questions.length - 1) {
+        currentStep++;
+        renderQuestion(currentStep);
+      } else {
+        const data = collectFormData();
+        const summary = Object.entries(data).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join('\n');
+        summaryText.textContent = summary;
+        summarySection.classList.remove("hidden");
+
+        const prompt = `Based on the following data, please suggest 5 physiotherapy exercises for an athlete.\nRespond only with a numbered list of exercises without explanations.\n\n${summary}`;
+        const encodedPrompt = encodeURIComponent(prompt);
+        chatLink.href = `https://chat.openai.com/?model=gpt-4&prompt=${encodedPrompt}`;
+        nextBtn.classList.add("hidden");
+        prevBtn.classList.add("hidden");
+      }
+    });
+
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        renderQuestion(currentStep);
+      }
+    });
+
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(summaryText.textContent).then(() => {
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => copyBtn.textContent = "Copy to Clipboard", 2000);
+      });
+    });
+
+    renderQuestion(currentStep);
+  </script>
 </body>
+
 </html>
