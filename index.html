@@ -68,34 +68,23 @@
       <h2 class="text-xl font-semibold mb-4">Summary</h2>
       <pre id="summaryText" class="bg-gray-800 p-4 rounded-md text-sm overflow-auto text-green-100"></pre>
       <button id="copyBtn" class="bg-green-600 text-white px-4 py-2 rounded mt-4">Copy to Clipboard</button>
-      <a id="chatLink" href="https://chat.openai.com/" target="_blank" class="ml-4 text-green-600 underline hover:no-underline">Open ChatGPT (paste prompt)</a>
+      <a id="chatLink" target="_blank" class="ml-4 text-green-600 underline hover:no-underline">Open ChatGPT (paste prompt)</a>
       <small class="block text-sm text-green-500 mt-1">Paste the copied text into ChatGPT to get suggestions.</small>
     </div>
   </div>
 
   <script>
-    const requiredFields = ["name", "email", "age", "activity", "fitness", "pain_location", "pain_side", "pain_intensity", "pain_movements", "daily_limits", "past_injuries", "neurological_signs"];
+    const requiredFields = ["name", "email", "age", "activity", "fitness", "pain_location", "pain_side", "pain_intensity"];
     const questions = [
       { label: "Name", name: "name", type: "text" },
-      { label: "Email (required)", name: "email", type: "email" },
+      { label: "Email", name: "email", type: "email" },
       { label: "Age", name: "age", type: "number" },
-      { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Non-binary", "Prefer not to say"] },
       { label: "Main sport or activity", name: "activity", type: "select", options: ["Running", "Cycling", "Swimming", "CrossFit", "Martial Arts", "Yoga/Pilates", "Gym workouts", "Climbing", "Dance", "Rowing", "Walking", "Other"] },
-      { label: "Fitness level", name: "fitness", type: "select", options: ["Beginner", "Amateur", "Semi-professional", "Professional", "Elite", "Other"] },
-      { label: "Training frequency and volume", name: "training", type: "text" },
+      { label: "Fitness level", name: "fitness", type: "select", options: ["Beginner", "Amateur", "Semi-professional", "Professional"] },
       { label: "Pain location (describe or select from body map)", name: "pain_location", type: "text" },
-      { label: "Side (left/right) [required]", name: "pain_side", type: "select", options: ["Left", "Right", "Both", "Not sure"] },
-      { label: "Pain type", name: "pain_type", type: "select", options: ["Sharp", "Dull", "Tingling", "Burning", "Stabbing", "Aching", "Throbbing", "Numbness", "Other"] },
+      { label: "Side (left/right)", name: "pain_side", type: "select", options: ["Left", "Right", "Both", "Not sure"] },
       { label: "Pain intensity (1-10)", name: "pain_intensity", type: "number" },
-      { label: "When does the pain appear?", name: "pain_when", type: "select", options: ["At rest", "During movement", "Under load", "Morning", "Evening", "Before exercise", "After exercise", "Varies"] },
-      { label: "How long have you had this pain?", name: "pain_duration", type: "text" },
-      { label: "What aggravates or relieves symptoms?", name: "pain_factors", type: "text" },
-      { label: "What movements or actions cause pain?", name: "pain_movements", type: "text" },
-      { label: "Limitations in daily life (walking, sleeping, stairs)?", name: "daily_limits", type: "text" },
-      { label: "Can you continue training? To what extent?", name: "training_ability", type: "text" },
-      { label: "Past injuries or surgeries?", name: "past_injuries", type: "text" },
-      { label: "Swelling, numbness, instability?", name: "neurological_signs", type: "text" },
-      { label: "Previous treatments (massage, tape, medication)?", name: "past_treatments", type: "text" }
+      { label: "When does the pain appear?", name: "pain_when", type: "select", options: ["At rest", "During movement", "Under load", "Morning", "Evening", "Before exercise", "After exercise", "Varies"] }
     ];
 
     const questionContainer = document.getElementById("questionContainer");
@@ -135,6 +124,9 @@
           const option = document.createElement("option");
           option.value = opt;
           option.textContent = opt;
+          if (formData[q.name] === opt) {
+            option.selected = true;
+          }
           input.appendChild(option);
         });
       } else {
@@ -142,7 +134,9 @@
         input.type = q.type;
         input.setAttribute("autocomplete", "off");
         input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
+        input.value = formData[q.name] || "";
       }
+
       input.name = q.name;
       input.id = "currentInput";
 
@@ -179,8 +173,13 @@
         currentStep++;
         renderQuestion(currentStep);
       } else {
-        const summary = Object.entries(formData).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join('\n');
-        summaryText.textContent = `Based on the following data, please suggest 5 physiotherapy exercises for an athlete.\nRespond only with a numbered list of exercises without explanations.\n\n${summary}`;
+        const summary = Object.entries(formData)
+          .map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`)
+          .join('\n');
+        const prompt = `Based on the following data, please suggest 5 physiotherapy exercises for an athlete.\nRespond only with a numbered list of exercises without explanations.\n\n${summary}`;
+        summaryText.textContent = prompt;
+        const encodedPrompt = encodeURIComponent(prompt);
+        chatLink.href = `https://chat.openai.com/?q=${encodedPrompt}`;
         summarySection.classList.remove("hidden");
         nextBtn.classList.add("hidden");
         prevBtn.classList.add("hidden");
