@@ -9,30 +9,42 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #0f172a;
-      color: #e0f2f1;
+      background-color: #d1e8f1;
+      color: #1f2937;
     }
 
     input, select, textarea {
-      background-color: #1e293b;
-      color: #e0f2f1;
-      border: 1px solid #4ade80;
+      background-color: #f9fafb;
+      color: #1f2937;
+      border: 1px solid #93c5fd;
     }
 
     .bg-white {
-      background-color: #1e293b !important;
+      background-color: #ffffff !important;
     }
 
     .text-gray-700 {
-      color: #bbf7d0 !important;
+      color: #1f2937 !important;
     }
 
     .bg-blue-600 {
-      background-color: #2563eb !important;
+      background-color: #3b82f6 !important;
     }
 
     .bg-green-600 {
-      background-color: #16a34a !important;
+      background-color: #10b981 !important;
+    }
+
+    .fade-enter {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      will-change: opacity, transform;
+    }
+
+    .fade-enter-active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
     }
   </style>
 </head>
@@ -40,11 +52,11 @@
 <body class="min-h-screen flex flex-col p-4">
   <div class="flex items-center space-x-2 mb-4">
     <img src="icon.png" alt="Logo" class="w-10 h-10">
-    <h1 class="text-2xl font-bold">Digital Physiotherapy Questionnaire</h1>
+    <h1 class="text-2xl font-bold text-blue-800">Digital Physiotherapy Questionnaire</h1>
   </div>
 
   <div class="shadow-2xl rounded-2xl w-full max-w-3xl mx-auto p-6 bg-white">
-    <form id="questionnaireForm" class="space-y-6">
+    <form id="questionnaireForm" class="space-y-6" autocomplete="off">
       <div id="questionContainer" class="space-y-4"></div>
       <div class="flex justify-between mt-6">
         <button type="button" id="prevBtn" class="bg-gray-300 px-4 py-2 rounded hidden">Back</button>
@@ -56,21 +68,23 @@
       <h2 class="text-xl font-semibold mb-4">Summary</h2>
       <pre id="summaryText" class="bg-gray-800 p-4 rounded-md text-sm overflow-auto text-green-100"></pre>
       <button id="copyBtn" class="bg-green-600 text-white px-4 py-2 rounded mt-4">Copy to Clipboard</button>
-      <a id="chatLink" href="#" target="_blank" class="ml-4 text-green-400 underline hover:no-underline">Open in ChatGPT</a>
+      <a id="chatLink" href="https://chat.openai.com/" target="_blank" class="ml-4 text-green-600 underline hover:no-underline">Open ChatGPT (paste prompt)</a>
+      <small class="block text-sm text-green-500 mt-1">Paste the copied text into ChatGPT to get suggestions.</small>
     </div>
   </div>
 
   <script>
+    const requiredFields = ["name", "email", "age", "activity", "fitness", "pain_location", "pain_side", "pain_intensity", "pain_movements", "daily_limits", "past_injuries", "neurological_signs"];
     const questions = [
       { label: "Name", name: "name", type: "text" },
-      { label: "Email (optional)", name: "email", type: "email" },
+      { label: "Email (required)", name: "email", type: "email" },
       { label: "Age", name: "age", type: "number" },
       { label: "Gender", name: "gender", type: "select", options: ["Male", "Female", "Non-binary", "Prefer not to say"] },
-      { label: "Main sport or activity", name: "activity", type: "select", options: ["Running", "Cycling", "Swimming", "CrossFit", "Martial Arts", "Team Sports", "Yoga/Pilates", "Gym workouts", "Climbing", "Dance", "Rowing", "Walking", "Other"] },
+      { label: "Main sport or activity", name: "activity", type: "select", options: ["Running", "Cycling", "Swimming", "CrossFit", "Martial Arts", "Yoga/Pilates", "Gym workouts", "Climbing", "Dance", "Rowing", "Walking", "Other"] },
       { label: "Fitness level", name: "fitness", type: "select", options: ["Beginner", "Amateur", "Semi-professional", "Professional", "Elite", "Other"] },
       { label: "Training frequency and volume", name: "training", type: "text" },
       { label: "Pain location (describe or select from body map)", name: "pain_location", type: "text" },
-      { label: "Side (left/right)", name: "pain_side", type: "select", options: ["Left", "Right", "Both", "Not sure"] },
+      { label: "Side (left/right) [required]", name: "pain_side", type: "select", options: ["Left", "Right", "Both", "Not sure"] },
       { label: "Pain type", name: "pain_type", type: "select", options: ["Sharp", "Dull", "Tingling", "Burning", "Stabbing", "Aching", "Throbbing", "Numbness", "Other"] },
       { label: "Pain intensity (1-10)", name: "pain_intensity", type: "number" },
       { label: "When does the pain appear?", name: "pain_when", type: "select", options: ["At rest", "During movement", "Under load", "Morning", "Evening", "Before exercise", "After exercise", "Varies"] },
@@ -93,17 +107,25 @@
     const chatLink = document.getElementById("chatLink");
 
     let currentStep = 0;
+    const formData = {};
 
     function renderQuestion(index) {
+      questionContainer.classList.add("fade-enter");
+      setTimeout(() => questionContainer.classList.add("fade-enter-active"), 10);
+      setTimeout(() => {
+        questionContainer.classList.remove("fade-enter", "fade-enter-active");
+      }, 600);
+
       questionContainer.innerHTML = "";
       const q = questions[index];
       const label = document.createElement("label");
       label.classList = "block";
-      label.textContent = q.label;
+      label.textContent = `${q.label} ${requiredFields.includes(q.name) ? "(required)" : "(optional)"}`;
 
       let input;
       if (q.type === "select") {
         input = document.createElement("select");
+        input.setAttribute("autocomplete", "off");
         input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
         const defaultOption = document.createElement("option");
         defaultOption.value = "";
@@ -118,15 +140,21 @@
       } else {
         input = document.createElement("input");
         input.type = q.type;
-        input.placeholder = "(Optional)";
+        input.setAttribute("autocomplete", "off");
         input.classList = "mt-1 block w-full rounded-md border px-3 py-2";
       }
       input.name = q.name;
       input.id = "currentInput";
 
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          nextBtn.click();
+        }
+      });
+
       questionContainer.appendChild(label);
       questionContainer.appendChild(input);
-
       input.focus();
 
       prevBtn.classList.toggle("hidden", index === 0);
@@ -134,42 +162,33 @@
     }
 
     function collectFormData() {
-      const inputs = document.querySelectorAll("#questionnaireForm input, #questionnaireForm select");
-      const data = {};
-      inputs.forEach(input => {
-        if (input.name) {
-          data[input.name] = input.value;
-        }
-      });
-      return data;
+      const input = document.getElementById("currentInput");
+      if (input && input.name) {
+        formData[input.name] = input.value;
+      }
     }
 
     nextBtn.addEventListener("click", () => {
+      collectFormData();
+      const currentName = questions[currentStep].name;
+      if (requiredFields.includes(currentName) && !formData[currentName]) {
+        alert("This question is required.");
+        return;
+      }
       if (currentStep < questions.length - 1) {
         currentStep++;
         renderQuestion(currentStep);
       } else {
-        const data = collectFormData();
-        const summary = Object.entries(data).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join('\n');
-        summaryText.textContent = summary;
+        const summary = Object.entries(formData).map(([k, v]) => `${k.replace(/_/g, ' ')}: ${v}`).join('\n');
+        summaryText.textContent = `Based on the following data, please suggest 5 physiotherapy exercises for an athlete.\nRespond only with a numbered list of exercises without explanations.\n\n${summary}`;
         summarySection.classList.remove("hidden");
-
-        const prompt = `Based on the following data, please suggest 5 physiotherapy exercises for an athlete.\nRespond only with a numbered list of exercises without explanations.\n\n${summary}`;
-        const encodedPrompt = encodeURIComponent(prompt);
-        chatLink.href = `https://chat.openai.com/?model=gpt-4&prompt=${encodedPrompt}`;
         nextBtn.classList.add("hidden");
         prevBtn.classList.add("hidden");
       }
     });
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        nextBtn.click();
-      }
-    });
-
     prevBtn.addEventListener("click", () => {
+      collectFormData();
       if (currentStep > 0) {
         currentStep--;
         renderQuestion(currentStep);
